@@ -1,0 +1,11 @@
+{
+  "name": "id-nfx",
+  "version": "1.0.0",
+  "description": "NFX Blockchain Provider - Similar to EIP-1193",
+  "main": "dist/id-nfx.min.js",
+  "module": "dist/id-nfx.esm.js",
+  "browser": "dist/id-nfx.umd.js",
+  "types": "types/id-nfx.d.ts",
+  "files": ["dist/", "types/"],
+  "keywords": ["nfx", "blockchain", "provider", "eip-1193", "web3"]
+}

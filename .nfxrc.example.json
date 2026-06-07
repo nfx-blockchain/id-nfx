@@ -1,0 +1,6 @@
+// Configuração NFX - arquivo .nfxrc.json
+{
+  "rpc": "http://localhost:27444",
+  "user": "test",
+  "password": "test123"
+}
