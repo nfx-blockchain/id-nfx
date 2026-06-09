@@ -1,72 +1,57 @@
 // id-nfx: NFX Blockchain Provider (EIP-1193 compatible)
-// Usage: import { NFXProvider } from 'id-nfx';
-
-const DEFAULT_RPC = 'http://localhost:27444';
-
-function loadConfig() {
-    try {
-        return require('./.nfxrc.json');
-    } catch {
-        return { rpc: DEFAULT_RPC, user: null, password: null };
-    }
-}
+const DEFAULT_RPC = 'http://localhost:27444'
 
 class NFXProvider {
     constructor(config) {
-        this.config = config || loadConfig();
-        this.isNFX = true;
-        this.chainId = '0x1';
-        this.selectedAddress = null;
-        this.accounts = [];
-        this.keypair = this.generateKeypair();
+        this.config = config || { rpc: DEFAULT_RPC }
+        this.chainId = '0x1'
+        this.selectedAddress = null
+        this.accounts = []
     }
 
-    generateKeypair() {
-        const privateKey = crypto?.getRandomValues 
-            ? Array.from(crypto.getRandomValues(new Uint8Array(32)))
-                .map(b => b.toString(16).padStart(2, '0')).join('') 
-            : '0x' + Math.random().toString(36).slice(2, 70);
-        
-        return { privateKey, address: 'NFX' + privateKey.slice(2, 34).toUpperCase() };
-    }
-
-    async requestAccounts() {
-        this.selectedAddress = this.keypair.address;
-        this.accounts = [this.selectedAddress];
-        window.dispatchEvent(new CustomEvent('nfx#accountsChanged', {
-            detail: this.accounts
-        }));
-        return this.accounts;
-    }
-
-    async rpcCall(method, params) {
-        const headers = { 'Content-Type': 'application/json' };
+    async rpcCall(method, params = []) {
+        const headers = { 'Content-Type': 'application/json' }
         if (this.config.user) {
-            headers['Authorization'] = 'Basic ' + btoa(this.config.user + ':' + this.config.password);
+            headers['Authorization'] = 'Basic ' + btoa(this.config.user + ':' + this.config.password)
         }
         const res = await fetch(this.config.rpc, {
             method: 'POST',
             headers,
             body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params })
-        });
-        return res.json();
+        })
+        return res.json()
+    }
+
+    async requestAccounts() {
+        const result = await this.rpcCall('getnewaddress')
+        this.selectedAddress = result.result
+        this.accounts = [this.selectedAddress]
+        window.dispatchEvent(new CustomEvent('nfx#accountsChanged', { detail: this.accounts }))
+        return this.accounts
     }
 
     async getBalance(address) {
-        const result = await this.rpcCall('getbalance', [address || this.selectedAddress]);
-        return result?.result;
+        const result = await this.rpcCall('getbalance', [address || this.selectedAddress])
+        return result?.result || '0'
     }
 
     async getinfo() {
-        const result = await this.rpcCall('getinfo', []);
-        return result?.result;
+        const result = await this.rpcCall('getinfo', [])
+        return result?.result
     }
 
-    async sign(message) { return this.keypair.privateKey; }
-    async sendTransaction(tx) { return '0x' + Math.random().toString(36).slice(2, 66); }
+    async sign(message) {
+        // O daemon não suporta sign diretamente - precisa wallet unlock
+        return this.rpcCall('signmessage', [this.selectedAddress, message]).then(r => r.result)
+    }
 
-    on(event, callback) { window.addEventListener('nfx#' + event, callback); }
-    removeListener(event, callback) { window.removeEventListener('nfx#' + event, callback); }
+    async sendTransaction(tx) {
+        const result = await this.rpcCall('sendtoaddress', [tx.to, tx.amount, '', '', 1, '', true])
+        return result?.result
+    }
+
+    on(event, callback) { window.addEventListener('nfx#' + event, callback) }
+    removeListener(event, callback) { window.removeEventListener('nfx#' + event, callback) }
 }
 
-module.exports = { NFXProvider, loadConfig };
+export { NFXProvider }

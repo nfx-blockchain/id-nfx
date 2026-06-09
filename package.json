@@ -1,11 +1,21 @@
 {
   "name": "id-nfx",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "NFX Blockchain Provider - Similar to EIP-1193",
-  "main": "dist/id-nfx.min.js",
+  "main": "dist/id-nfx.umd.js",
   "module": "dist/id-nfx.esm.js",
-  "browser": "dist/id-nfx.umd.js",
-  "types": "types/id-nfx.d.ts",
-  "files": ["dist/", "types/"],
+  "types": "dist/id-nfx.d.ts",
+  "type": "module",
+  "files": ["dist/"],
+  "scripts": {
+    "build": "rollup -c",
+    "prepare": "npm run build"
+  },
+  "devDependencies": {
+    "rollup": "^4.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
   "keywords": ["nfx", "blockchain", "provider", "eip-1193", "web3"]
 }
